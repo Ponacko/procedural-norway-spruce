@@ -570,7 +570,6 @@ mesh.uv = uvs;
 mesh.triangles = triangles;
  
 mesh.RecalculateBounds();
-mesh.Optimize();
 
 
 

@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2015
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "procedural-norway-spruce", "procedural-norway-spruce.csproj", "{0FB9EE71-D849-121D-8514-C5E830B7F7B1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "procedural-norway-spruce.Editor", "procedural-norway-spruce.Editor.csproj", "{9BA31DBA-15AE-0E32-D526-471A1DBFD762}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0FB9EE71-D849-121D-8514-C5E830B7F7B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0FB9EE71-D849-121D-8514-C5E830B7F7B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0FB9EE71-D849-121D-8514-C5E830B7F7B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0FB9EE71-D849-121D-8514-C5E830B7F7B1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9BA31DBA-15AE-0E32-D526-471A1DBFD762}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9BA31DBA-15AE-0E32-D526-471A1DBFD762}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9BA31DBA-15AE-0E32-D526-471A1DBFD762}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9BA31DBA-15AE-0E32-D526-471A1DBFD762}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

@@ -1,11 +1,8 @@
 ﻿using System;
 using UnityEngine;
-using System.Collections;
 using System.Text;
 using System.Linq;
 using System.Collections.Generic;
-using System.Security.Cryptography.X509Certificates;
-using UnityEngine.Assertions.Comparers;
 using UnityEngine.UI;
 
 public class MyLSystem2 : MonoBehaviour
@@ -31,10 +28,9 @@ public class MyLSystem2 : MonoBehaviour
     public Rule[] RulesArray;
     public Parameter[] ParameterArray;
     public int Iterations = 1;
-    public GameObject Tree;
+    public List<GameObject> Trees = new List<GameObject>();
     public Texture2D Tex;
     public Texture2D LeafText;
-    public int Lod;
 
     private class State {
         public Vector3 Heading;
@@ -50,7 +46,8 @@ public class MyLSystem2 : MonoBehaviour
         }
     }
 
-    private State currentState = new State() { Heading = Vector3.up, Up = Vector3.back, Left = Vector3.left,  Width = 0,  Position = Vector3.zero, ChangedDir = false};
+    private State currentState = new State() { Heading = Vector3.up, Up = Vector3.back,
+        Left = Vector3.left,  Width = 0,  Position = Vector3.zero, ChangedDir = false};
     private State nextState;
     private Dictionary<string, string> rules = new Dictionary<string, string>();
     private Dictionary<string, string> parameters = new Dictionary<string, string>();
@@ -115,17 +112,17 @@ public class MyLSystem2 : MonoBehaviour
         return vertices;
     }
 
-    private Mesh CreateLeaf(State state) {
+    private Mesh CreateLeaf(State state, int lod) {
         var m = new Mesh();
         var offset = currentState.Width;
         var length = currentState.Width*30;
         m.name = "Leaf";
-        if (Lod != 3) {
+        if (lod != Trees.Count) {
             m.vertices = new Vector3[] {
                 state.Position - offset*state.Heading - offset*state.Left,
                 state.Position - offset*state.Heading + offset*state.Left,
                 state.Position + offset*state.Heading,
-                state.Position + state.Up*length + state.Heading*50*offset
+                state.Position + state.Up*length*1.3f + state.Heading*65*offset
             };
             m.uv = new Vector2[] {
                 new Vector2(0, 0),
@@ -181,6 +178,17 @@ public class MyLSystem2 : MonoBehaviour
         return m;
     }
 
+    private List<Vector2> MakeUVs(int sides) {
+        float offset = 1f/sides;
+        List<Vector2> uvs = new List<Vector2>();
+        for (int i = 0; i <= 1f; i++) {
+            for (float j = 0f; j <= 1f; j+= offset) {
+                uvs.Add(new Vector2(i, j));
+            }
+        }
+        return uvs;
+    }
+
     private Mesh CreateMesh(bool hasBot, bool hasTop)
     {
         var m = new Mesh();
@@ -207,6 +215,10 @@ public class MyLSystem2 : MonoBehaviour
             new Vector2(1, 0.875f),
             new Vector2(1, 1),
         };
+        var dopici = MakeUVs(8).ToArray();
+        foreach (var kokot in dopici) {
+            Debug.Log(String.Format("{0},{1}",kokot.x, kokot.y));
+        }
         var tris = new List<int>();
         tris.AddRange(new int[] {
             10, 1, 2, 10, 2, 11,
@@ -292,29 +304,36 @@ public class MyLSystem2 : MonoBehaviour
 
                 case '+':
                     currentState.ChangedDir = true;
-                    RotateAxes(GetParameter(s, index) * Randomness(0.5f, 1.5f), ref nextState.Heading, ref nextState.Left, nextState.Up);
+                    RotateAxes(GetParameter(s, index) * Randomness(0.5f, 1.5f), ref nextState.Heading, 
+                        ref nextState.Left, nextState.Up);
                     break;
 
                 case '-':
                     currentState.ChangedDir = true;
-                    RotateAxes(- GetParameter(s, index) * Randomness(0.5f, 1.5f), ref nextState.Heading, ref nextState.Left, nextState.Up);
+                    RotateAxes(- GetParameter(s, index) * Randomness(0.5f, 1.5f), ref nextState.Heading, 
+                        ref nextState.Left, nextState.Up);
                     break;
                 case '^':
                     currentState.ChangedDir = true;
-                    RotateAxes(GetParameter(s, index) * Randomness(0.9f, 1f), ref nextState.Heading, ref nextState.Up, nextState.Left);
+                    RotateAxes(GetParameter(s, index) * Randomness(0.9f, 1f), ref nextState.Heading, 
+                        ref nextState.Up, nextState.Left);
                     break;
                 case '&':
                     currentState.ChangedDir = true;
-                    RotateAxes(- GetParameter(s, index) * Randomness(0.9f, 1f), ref nextState.Heading, ref nextState.Up, nextState.Left);
+                    RotateAxes(- GetParameter(s, index) * Randomness(0.9f, 1f), ref nextState.Heading, 
+                        ref nextState.Up, nextState.Left);
                     break;
                 case '/':
-                    RotateAxes(GetParameter(s, index) * Randomness(0.75f, 1.2f), ref nextState.Up, ref nextState.Left, nextState.Heading);
+                    RotateAxes(GetParameter(s, index) * Randomness(0.75f, 1.2f), ref nextState.Up, 
+                        ref nextState.Left, nextState.Heading);
                     break;
                 case '\\':
-                    RotateAxes(- GetParameter(s, index) * Randomness(0.75f, 1.2f), ref nextState.Up, ref nextState.Left, nextState.Heading);
+                    RotateAxes(- GetParameter(s, index) * Randomness(0.75f, 1.2f), ref nextState.Up, 
+                        ref nextState.Left, nextState.Heading);
                     break;
                 case '$':
-                    RotateAxes(Vector2.Angle(new Vector2(nextState.Left.x, nextState.Left.y), Vector2.left) , ref nextState.Up, ref nextState.Left, nextState.Heading);
+                    RotateAxes(Vector2.Angle(new Vector2(nextState.Left.x, nextState.Left.y), Vector2.left) , 
+                        ref nextState.Up, ref nextState.Left, nextState.Heading);
 
                     break;
                 case '!':
@@ -329,15 +348,19 @@ public class MyLSystem2 : MonoBehaviour
     }
 
     public void Redraw() {
-        foreach (Transform child in Tree.transform)
-        {
-            Destroy(child.gameObject);
+        foreach (var tree in Trees) {
+            foreach (Transform child in tree.transform)
+            {
+                Destroy(child.gameObject);
+            }
         }
+        
         ResetParams();
         foreach (var slider in Sliders) {
             parameters[slider.name] = slider.GetComponent<Slider>().value.ToString();
         }
-        currentState = new State() { Heading = Vector3.up, Up = Vector3.back, Left = Vector3.left, Width = 0, Position = Vector3.zero, ChangedDir = false };
+        currentState = new State() { Heading = Vector3.up, Up = Vector3.back, Left = Vector3.left, Width = 0,
+            Position = Vector3.zero, ChangedDir = false };
         nextState = currentState.Clone();
         states.Clear();
         var sentence = Axiom;
@@ -349,14 +372,29 @@ public class MyLSystem2 : MonoBehaviour
         Draw(sentence);
     }
 
-    private void MoveForward(string s, int index) {
+    private float MinBranchWidth(int lod) {
+        switch (lod) {
+            case 1:
+                return 0.0015f;
+            case 2:
+                return 0.00125f;
+            case 3:
+                return 0.001f;
+            case 4:
+                return 0.00075f;
+            case 5:
+                return 0.0005f;
+            case 6:
+                return 0.00025f;
+            default:
+                return 0f;
+        }
+    }
 
-        var plane = new GameObject("Branch");
-        plane.transform.SetParent(Tree.transform);
-        var meshFilter = (MeshFilter)plane.AddComponent(typeof(MeshFilter));
-        var meshLength = GetParameter(s, index) * Randomness(0.8f, 1.2f);
-        var head = Quaternion.AngleAxis(Randomness(-0.07f, 0.07f)/nextState.Width, nextState.Up) * nextState.Heading;
-        head = Quaternion.AngleAxis(Randomness(-0.07f, 0.07f) / nextState.Width, nextState.Left) * head;
+    private void MoveForward(string s, int index) {
+        var meshLength = GetParameter(s, index)*Randomness(0.8f, 1.2f);
+        var head = Quaternion.AngleAxis(Randomness(-0.07f, 0.07f)/nextState.Width, nextState.Up)*nextState.Heading;
+        head = Quaternion.AngleAxis(Randomness(-0.07f, 0.07f)/nextState.Width, nextState.Left)*head;
         var savedPosition = currentState.Position;
         nextState.Position = currentState.Position +
                              head*meshLength;
@@ -367,62 +405,82 @@ public class MyLSystem2 : MonoBehaviour
             currentState = nextState.Clone();
             currentState.Position = savedPosition;
         }
-        meshFilter.mesh = CreateMesh(index == 0, index + 1 >= s.Length || s[index + 1] == ']');
-        if (currentState.Width < 0.005f) {
-            BuildLeaves(plane);
+        for (int i = 0; i < Trees.Count; i++) {
+            var tree = Trees[i];
+            if (currentState.Width < MinBranchWidth(i + 1))
+            {
+                continue;
+            }
+            var plane = new GameObject("Branch");
+            plane.transform.SetParent(tree.transform);
+            var meshFilter = (MeshFilter) plane.AddComponent(typeof(MeshFilter));
+            meshFilter.mesh = CreateMesh(index == 0, index + 1 >= s.Length || s[index + 1] == ']');
+            if (currentState.Width < 0.005f) {
+                BuildLeaves(plane, i + 1);
+            }
+            var renderer = plane.AddComponent(typeof(MeshRenderer)) as MeshRenderer;
+            renderer.material.shader = Shader.Find("Diffuse");
+            Tex.Apply();
+            renderer.material.mainTexture = Tex;
         }
-        
-        if (currentState.ChangedDir) {
-            if (savedState != null) currentState = savedState.Clone();
-        }
-        currentState = nextState.Clone();
-        currentState.ChangedDir = false;
-        var renderer = plane.AddComponent(typeof(MeshRenderer)) as MeshRenderer;
-        renderer.material.shader = Shader.Find("Diffuse");
-        Tex.Apply();
-        renderer.material.mainTexture = Tex;
+        if (currentState.ChangedDir)
+            {
+                if (savedState != null) currentState = savedState.Clone();
+            }
+            currentState = nextState.Clone();
+            currentState.ChangedDir = false;
+           
     }
 
-    private int MaxLeaves() {
-        switch (Lod) {
-            case 1:
-                return 6;
-            case 2:
-                return 8;
-            default:
-                return 10;
-        }
+    private int MaxLeaves(int lod) {
+        return lod + 3;
     }
 
-    private float MinOffset() {
-        switch (Lod)
+    private float MinOffset(int lod) {
+        switch (lod)
         {
             case 1:
+                return 0.11f;
+            case 2:
+                return 0.09f;
+            case 3:
                 return 0.07f;
-            case 2:
-                return 0.05f;
+            case 4:
+                return 0.065f;
+            case 5:
+                return 0.06f;
+            case 6:
+                return 0.055f;
             default:
                 return 0.05f;
         }
     }
 
-    private float MaxOffset()
+    private float MaxOffset(int lod)
     {
-        switch (Lod)
+        switch (lod)
         {
             case 1:
-                return 0.3f;
+                return 0.4f;
             case 2:
+                return 0.35f;
+            case 3:
+                return 0.3f;
+            case 4:
+                return 0.25f;
+            case 5:
                 return 0.2f;
+            case 6:
+                return 0.15f;
             default:
                 return 0.075f;
         }
     }
 
-    private void BuildLeaves(GameObject branch) {
-        var maxleaves = MaxLeaves();
-        var minOffset = MinOffset();
-        var maxOffset = MaxOffset();
+    private void BuildLeaves(GameObject branch, int lod) {
+        var maxleaves = MaxLeaves(lod);
+        var minOffset = MinOffset(lod);
+        var maxOffset = MaxOffset(lod);
         var baseOffset =  0.0000005f;
         var leafState = currentState.Clone();
         var offset = baseOffset/(currentState.Width*currentState.Width);
@@ -440,7 +498,7 @@ public class MyLSystem2 : MonoBehaviour
                 var leaf = new GameObject("Leaf");
                 leaf.transform.SetParent(branch.transform);
                 var meshFilter = (MeshFilter)leaf.AddComponent(typeof(MeshFilter));
-                meshFilter.mesh = CreateLeaf(leafState);
+                meshFilter.mesh = CreateLeaf(leafState, lod);
                 var renderer = leaf.AddComponent(typeof(MeshRenderer)) as MeshRenderer;
                 renderer.material.shader = Shader.Find("Diffuse");
                 LeafText.Apply();
