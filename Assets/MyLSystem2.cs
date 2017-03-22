@@ -31,6 +31,7 @@ public class MyLSystem2 : MonoBehaviour
     public List<GameObject> Trees = new List<GameObject>();
     public Texture2D Tex;
     public Texture2D LeafText;
+    public Dictionary<int, Vector2[]> UvsDictionary = new Dictionary<int, Vector2[]>();
 
     private class State {
         public Vector3 Heading;
@@ -100,13 +101,15 @@ public class MyLSystem2 : MonoBehaviour
             sentence = Replace(sentence);
             Debug.Log(sentence);
         }
+        var dopici = MakeUVs(8);
+        UvsDictionary.Add(8, dopici);
         Draw(sentence);
     }
 
-    private List<Vector3> MakeVertices(State state) {
-        var vertices = new List<Vector3>();
-        vertices.Add(state.Position);
-        for (var angle = 0; angle < 360; angle += 45) {
+    private List<Vector3> MakeVertices(State state, int sides) {
+        int angleOffset = 360/sides;
+        var vertices = new List<Vector3> {state.Position};
+        for (var angle = 0; angle < 360; angle += angleOffset) {
             vertices.Add(state.Position + Quaternion.AngleAxis(angle, state.Heading) * state.Up * state.Width);
         }
         return vertices;
@@ -178,13 +181,16 @@ public class MyLSystem2 : MonoBehaviour
         return m;
     }
 
-    private List<Vector2> MakeUVs(int sides) {
+    private Vector2[] MakeUVs(int sides) {
         float offset = 1f/sides;
-        List<Vector2> uvs = new List<Vector2>();
+        Vector2[] uvs = new Vector2[(sides+1) * 2];
+        int k = 0;
         for (int i = 0; i <= 1f; i++) {
-            for (float j = 0f; j <= 1f; j+= offset) {
-                uvs.Add(new Vector2(i, j));
+            for (float j = 0f; j < 1f; j+= offset) {
+                uvs[k] = new Vector2(i, j);
+                k++;
             }
+            uvs[k] = new Vector2(i, 1);
         }
         return uvs;
     }
@@ -193,62 +199,37 @@ public class MyLSystem2 : MonoBehaviour
     {
         var m = new Mesh();
         m.name = "ScriptedMesh";
+
+        m.vertices = MakeVertices(currentState, 6).Concat(MakeVertices(nextState, 6)).ToArray();
+
+        m.uv = MakeUVs(6).ToArray();
         
-        m.vertices = MakeVertices(currentState).Concat(MakeVertices(nextState)).ToArray();
-        m.uv = new Vector2[] {
-            new Vector2(0, 0),
-            new Vector2(0, 0.125f),
-            new Vector2(0, 0.25f),
-            new Vector2(0, 0.375f),
-            new Vector2(0, 0.5f),
-            new Vector2(0, 0.625f),
-            new Vector2(0, 0.75f),
-            new Vector2(0, 0.875f),
-            new Vector2(0, 1),
-            new Vector2(1, 0),
-            new Vector2(1, 0.125f),
-            new Vector2(1, 0.25f),
-            new Vector2(1, 0.375f),
-            new Vector2(1, 0.5f),
-            new Vector2(1, 0.625f),
-            new Vector2(1, 0.75f),
-            new Vector2(1, 0.875f),
-            new Vector2(1, 1),
-        };
-        var dopici = MakeUVs(8).ToArray();
-        foreach (var kokot in dopici) {
-            Debug.Log(String.Format("{0},{1}",kokot.x, kokot.y));
-        }
-        var tris = new List<int>();
-        tris.AddRange(new int[] {
-            10, 1, 2, 10, 2, 11,
-            11, 2, 3, 11, 3, 12,
-            12, 3, 4, 12, 4, 13,
-            13, 4, 5, 13, 5, 14,
-            14, 5, 6, 14, 6, 15,
-            15, 6, 7, 15, 7, 16,
-            16, 7, 8, 16, 8, 17,
-            17, 8, 1, 17, 1, 10});
-        if (hasBot) {
-            tris.AddRange(new int[] {
-                0, 2, 1, 0, 3, 2,
-                0, 4, 3, 0, 5, 4,
-                0, 6, 5, 0, 7, 6,
-                0, 8, 7, 0, 1, 8
-            });
-        }
-        if (hasTop) {
-            tris.AddRange(new int[] {
-                9, 10, 11, 9, 11, 12,
-                9, 12, 13, 9, 13, 14,
-                9, 14, 15, 9, 15, 16,
-                9, 16, 17, 9, 17, 10
-            });
-        }
-        m.triangles = tris.ToArray();
+        m.triangles = MakeTris(hasBot, hasTop, 6).ToArray();
         m.RecalculateNormals();
 
         return m;
+    }
+
+    private static List<int> MakeTris(bool hasBot, bool hasTop, int sides)
+    {
+        var tris = new List<int>();
+        for (int i = 1; i <= sides; i++) {
+            tris.AddRange(new int[] {
+                sides + 1 + i, i, i%sides +1,
+                sides + 1 + i, i%sides + 1, sides + 2 + i%sides
+            });
+            if (hasBot) {
+                tris.AddRange(new int[] {
+                    0, i%sides + 1, i
+                });
+            }
+            if (hasTop) {
+                tris.AddRange(new int[] {
+                    sides + 1, sides + i + 1, sides + i%sides + 2
+                });
+            }
+        }
+        return tris;
     }
 
     private float Randomness(float a, float b) {
