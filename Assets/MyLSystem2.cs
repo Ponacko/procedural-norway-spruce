@@ -101,8 +101,9 @@ public class MyLSystem2 : MonoBehaviour
             sentence = Replace(sentence);
             Debug.Log(sentence);
         }
-        var dopici = MakeUVs(8);
-        UvsDictionary.Add(8, dopici);
+        for (int i = 4; i < 9; i+=2) {
+            UvsDictionary.Add(i, MakeUVs(i));
+        }
         Draw(sentence);
     }
 
@@ -120,7 +121,7 @@ public class MyLSystem2 : MonoBehaviour
         var offset = currentState.Width;
         var length = currentState.Width*30;
         m.name = "Leaf";
-        if (lod != Trees.Count) {
+        if (lod < 4) {
             m.vertices = new Vector3[] {
                 state.Position - offset*state.Heading - offset*state.Left,
                 state.Position - offset*state.Heading + offset*state.Left,
@@ -195,16 +196,16 @@ public class MyLSystem2 : MonoBehaviour
         return uvs;
     }
 
-    private Mesh CreateMesh(bool hasBot, bool hasTop)
+    private Mesh CreateMesh(bool hasBot, bool hasTop, int sides)
     {
         var m = new Mesh();
         m.name = "ScriptedMesh";
 
-        m.vertices = MakeVertices(currentState, 6).Concat(MakeVertices(nextState, 6)).ToArray();
+        m.vertices = MakeVertices(currentState, sides).Concat(MakeVertices(nextState, sides)).ToArray();
 
-        m.uv = MakeUVs(6).ToArray();
+        m.uv = MakeUVs(sides).ToArray();
         
-        m.triangles = MakeTris(hasBot, hasTop, 6).ToArray();
+        m.triangles = MakeTris(hasBot, hasTop, sides).ToArray();
         m.RecalculateNormals();
 
         return m;
@@ -395,7 +396,11 @@ public class MyLSystem2 : MonoBehaviour
             var plane = new GameObject("Branch");
             plane.transform.SetParent(tree.transform);
             var meshFilter = (MeshFilter) plane.AddComponent(typeof(MeshFilter));
-            meshFilter.mesh = CreateMesh(index == 0, index + 1 >= s.Length || s[index + 1] == ']');
+            int sides = Sides(i + 1);
+            if (currentState.Width < MinBranchWidth(i + 1)*20) {
+                sides = 4;
+            }
+            meshFilter.mesh = CreateMesh(index == 0, index + 1 >= s.Length || s[index + 1] == ']', sides);
             if (currentState.Width < 0.005f) {
                 BuildLeaves(plane, i + 1);
             }
@@ -411,6 +416,19 @@ public class MyLSystem2 : MonoBehaviour
             currentState = nextState.Clone();
             currentState.ChangedDir = false;
            
+    }
+
+    private int Sides(int lod)
+    {
+        switch (lod)
+        {
+            case 5:
+                return 6;
+            case 6:
+                return 8;
+            default:
+                return 4;
+        }
     }
 
     private int MaxLeaves(int lod) {
