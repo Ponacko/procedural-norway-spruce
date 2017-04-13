@@ -4,6 +4,7 @@ using System.Text;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine.UI;
+using Tree = UnityEngine.Tree;
 
 public class MyLSystem2 : MonoBehaviour
 {
@@ -28,9 +29,9 @@ public class MyLSystem2 : MonoBehaviour
     public Rule[] RulesArray;
     public Parameter[] ParameterArray;
     public int Iterations = 1;
-    public List<GameObject> Trees = new List<GameObject>();
+    public GameObject LodPrefab;
     public Texture2D Tex;
-    public Texture2D LeafText;
+    public Texture2D LeafTexture;
     public Dictionary<int, Vector2[]> UvsDictionary = new Dictionary<int, Vector2[]>();
 
     private class State {
@@ -47,6 +48,7 @@ public class MyLSystem2 : MonoBehaviour
         }
     }
 
+    private List<GameObject> treeSets = new List<GameObject>();
     private State currentState = new State() { Heading = Vector3.up, Up = Vector3.back,
         Left = Vector3.left,  Width = 0,  Position = Vector3.zero, ChangedDir = false};
     private State nextState;
@@ -95,6 +97,13 @@ public class MyLSystem2 : MonoBehaviour
 
     private void Start()
     {
+        for (int i = 0; i < 2; i++) {
+            for (int j = 0; j < 2; j++) {
+                var vector3 = new Vector3(r.Next(i * 5, (i + 1) * 5), 0, r.Next(j * 5, (j + 1) * 5));
+                var treeSet = Instantiate(LodPrefab, vector3, Quaternion.identity);
+                treeSets.Add(treeSet);
+            }
+        }
         var sentence = Axiom;
         for (var i = 0; i < Iterations; i++)
         {
@@ -104,7 +113,24 @@ public class MyLSystem2 : MonoBehaviour
         for (int i = 4; i < 9; i+=2) {
             UvsDictionary.Add(i, MakeUVs(i));
         }
-        Draw(sentence);
+        foreach (var treeSet in treeSets) {
+            currentState = new State()
+            {
+                Heading = Vector3.up,
+                Up = Vector3.back,
+                Left = Vector3.left,
+                Width = 0,
+                Position = treeSet.transform.position,
+                ChangedDir = false
+            };
+            nextState = currentState.Clone();
+            Draw(sentence, treeSet);
+        }
+        var trees = FindObjectsOfType<Tree>();
+        //foreach (Tree tree in trees) {
+        //    tree.Optimize();
+        //}
+
     }
 
     private List<Vector3> MakeVertices(State state, int sides) {
@@ -118,10 +144,11 @@ public class MyLSystem2 : MonoBehaviour
 
     private Mesh CreateLeaf(State state, int lod) {
         var m = new Mesh();
+        m.name = "Leaf";
         var offset = currentState.Width;
         var length = currentState.Width*30;
         m.name = "Leaf";
-        if (lod < 4) {
+        if (lod < 6) {
             m.vertices = new Vector3[] {
                 state.Position - offset*state.Heading - offset*state.Left,
                 state.Position - offset*state.Heading + offset*state.Left,
@@ -196,19 +223,31 @@ public class MyLSystem2 : MonoBehaviour
         return uvs;
     }
 
-    private Mesh CreateMesh(bool hasBot, bool hasTop, int sides)
+    private void CreateMesh(bool hasBot, bool hasTop, int sides, Spruce tree)
     {
-        var m = new Mesh();
-        m.name = "ScriptedMesh";
+        var vertices = MakeVertices(currentState, sides).Concat(MakeVertices(nextState, sides)).ToArray();
+        if (tree.CurrentVertices + vertices.Length >= Spruce.MaxVertices) {
+            tree.Instantiate();
+        }
+        tree.Vertices.AddRange(vertices);
+        tree.Uvs.AddRange(MakeUVs(sides));
+        var tris = MakeTris(hasBot, hasTop, sides);
+        for (int index = 0; index < tris.Count; index++) {
+            tris[index] += tree.CurrentVertices;
+        }
+        tree.Tris.AddRange(tris);
+        tree.CurrentVertices += vertices.Length;
+        //var m = new Mesh();
+        //m.name = "Branch";
 
-        m.vertices = MakeVertices(currentState, sides).Concat(MakeVertices(nextState, sides)).ToArray();
+        //m.vertices = MakeVertices(currentState, sides).Concat(MakeVertices(nextState, sides)).ToArray();
 
-        m.uv = MakeUVs(sides).ToArray();
+        //m.uv = MakeUVs(sides).ToArray();
         
-        m.triangles = MakeTris(hasBot, hasTop, sides).ToArray();
-        m.RecalculateNormals();
+        //m.triangles = MakeTris(hasBot, hasTop, sides).ToArray();
+        //m.RecalculateNormals();
 
-        return m;
+        //return m;
     }
 
     private static List<int> MakeTris(bool hasBot, bool hasTop, int sides)
@@ -256,7 +295,7 @@ public class MyLSystem2 : MonoBehaviour
         second = Quaternion.AngleAxis(angle, around) * second;
     }
 
-    public void Draw(string s)
+    public void Draw(string s, GameObject treeSet)
     {
         for (var index = 0; index < s.Length; index++)
         {
@@ -264,10 +303,10 @@ public class MyLSystem2 : MonoBehaviour
             switch (c)
             {
                 case 'F':
-                    MoveForward(s, index);
+                    MoveForward(s, index, treeSet);
                     break;
                 case 'L':
-                    MoveForward(s, index);
+                    MoveForward(s, index, treeSet);
                     break;
                 case 'f':
                     currentState.Position += currentState.Heading*GetParameter(s, index);
@@ -330,12 +369,12 @@ public class MyLSystem2 : MonoBehaviour
     }
 
     public void Redraw() {
-        foreach (var tree in Trees) {
-            foreach (Transform child in tree.transform)
-            {
-                Destroy(child.gameObject);
-            }
-        }
+        //foreach (var tree in Trees) {
+        //    foreach (Transform child in tree.transform)
+        //    {
+        //        Destroy(child.gameObject);
+        //    }
+        //}
         
         ResetParams();
         foreach (var slider in Sliders) {
@@ -351,71 +390,75 @@ public class MyLSystem2 : MonoBehaviour
             sentence = Replace(sentence);
             Debug.Log(sentence);
         }
-        Draw(sentence);
+        foreach (var treeSet in treeSets) {
+            Draw(sentence, treeSet);
+        }
     }
 
     private float MinBranchWidth(int lod) {
         switch (lod) {
             case 1:
-                return 0.0015f;
+                return 0.00175f;
             case 2:
-                return 0.00125f;
+                return 0.0015f;
             case 3:
-                return 0.001f;
+                return 0.0013f;
             case 4:
-                return 0.00075f;
+                return 0.0012f;
             case 5:
-                return 0.0005f;
+                return 0.001f;
             case 6:
-                return 0.00025f;
+                return 0.00075f;
             default:
-                return 0f;
+                return 0.00075f;
+            
         }
     }
 
-    private void MoveForward(string s, int index) {
+    private void MoveForward(string s, int index, GameObject treeSet) {
         var meshLength = GetParameter(s, index)*Randomness(0.8f, 1.2f);
         var head = Quaternion.AngleAxis(Randomness(-0.07f, 0.07f)/nextState.Width, nextState.Up)*nextState.Heading;
         head = Quaternion.AngleAxis(Randomness(-0.07f, 0.07f)/nextState.Width, nextState.Left)*head;
         var savedPosition = currentState.Position;
         nextState.Position = currentState.Position +
                              head*meshLength;
-
         State savedState = null;
         if (currentState.ChangedDir) {
             savedState = currentState.Clone();
             currentState = nextState.Clone();
             currentState.Position = savedPosition;
         }
-        for (int i = 0; i < Trees.Count; i++) {
-            var tree = Trees[i];
-            if (currentState.Width < MinBranchWidth(i + 1))
+        int i = 0;
+        foreach (Transform tree in treeSet.transform) {
+            i++;
+            if (currentState.Width < MinBranchWidth(i))
             {
                 continue;
             }
-            var plane = new GameObject("Branch");
-            plane.transform.SetParent(tree.transform);
-            var meshFilter = (MeshFilter) plane.AddComponent(typeof(MeshFilter));
-            int sides = Sides(i + 1);
-            if (currentState.Width < MinBranchWidth(i + 1)*20) {
+            //var plane = new GameObject("Branch");
+            //plane.transform.SetParent(tree);
+            //var meshFilter = (MeshFilter)plane.AddComponent(typeof(MeshFilter));
+            int sides = Sides(i);
+            if (currentState.Width < MinBranchWidth(i) * 10)
+            {
                 sides = 4;
             }
-            meshFilter.mesh = CreateMesh(index == 0, index + 1 >= s.Length || s[index + 1] == ']', sides);
-            if (currentState.Width < 0.005f) {
-                BuildLeaves(plane, i + 1);
+            var spruce = tree.GetComponent<Spruce>();
+            CreateMesh(index == 0, index + 1 >= s.Length || s[index + 1] == ']', sides, spruce);
+            if (index == s.LastIndexOf('F')) {
+                spruce.Instantiate();
             }
-            var renderer = plane.AddComponent(typeof(MeshRenderer)) as MeshRenderer;
-            renderer.material.shader = Shader.Find("Diffuse");
-            Tex.Apply();
-            renderer.material.mainTexture = Tex;
+            if (currentState.Width < 0.005f)
+            {
+                BuildLeaves(tree.gameObject, i);
+            }
         }
         if (currentState.ChangedDir)
-            {
-                if (savedState != null) currentState = savedState.Clone();
-            }
-            currentState = nextState.Clone();
-            currentState.ChangedDir = false;
-           
+        {
+            if (savedState != null) currentState = savedState.Clone();
+        }
+        currentState = nextState.Clone();
+        currentState.ChangedDir = false;
     }
 
     private int Sides(int lod)
@@ -432,26 +475,26 @@ public class MyLSystem2 : MonoBehaviour
     }
 
     private int MaxLeaves(int lod) {
-        return lod + 3;
+        return (lod < 3) ? lod-1 : lod-2;
     }
 
     private float MinOffset(int lod) {
         switch (lod)
         {
             case 1:
-                return 0.11f;
+                return 0.2f;
             case 2:
-                return 0.09f;
+                return 0.15f;
             case 3:
-                return 0.07f;
+                return 0.11f;
             case 4:
-                return 0.065f;
+                return 0.09f;
             case 5:
-                return 0.06f;
+                return 0.07f;
             case 6:
-                return 0.055f;
+                return 0.065f;
             default:
-                return 0.05f;
+                return 0.06f;
         }
     }
 
@@ -460,23 +503,23 @@ public class MyLSystem2 : MonoBehaviour
         switch (lod)
         {
             case 1:
-                return 0.4f;
+                return 0.5f;
             case 2:
-                return 0.35f;
+                return 0.45f;
             case 3:
-                return 0.3f;
+                return 0.4f;
             case 4:
-                return 0.25f;
+                return 0.35f;
             case 5:
-                return 0.2f;
+                return 0.3f;
             case 6:
-                return 0.15f;
+                return 0.25f;
             default:
-                return 0.075f;
+                return 0.2f;
         }
     }
 
-    private void BuildLeaves(GameObject branch, int lod) {
+    private void BuildLeaves(GameObject tree, int lod) {
         var maxleaves = MaxLeaves(lod);
         var minOffset = MinOffset(lod);
         var maxOffset = MaxOffset(lod);
@@ -495,13 +538,14 @@ public class MyLSystem2 : MonoBehaviour
             j++;
             for (var i = 0; i < 8; i++) {
                 var leaf = new GameObject("Leaf");
-                leaf.transform.SetParent(branch.transform);
+                leaf.transform.SetParent(tree.transform);
                 var meshFilter = (MeshFilter)leaf.AddComponent(typeof(MeshFilter));
                 meshFilter.mesh = CreateLeaf(leafState, lod);
+                meshFilter.sharedMesh.name = "Leaf";
                 var renderer = leaf.AddComponent(typeof(MeshRenderer)) as MeshRenderer;
                 renderer.material.shader = Shader.Find("Diffuse");
-                LeafText.Apply();
-                renderer.material.mainTexture = LeafText;
+                LeafTexture.Apply();
+                renderer.material.mainTexture = LeafTexture;
                 RotateAxes( 45 * Randomness(0.75f, 1.2f), ref leafState.Up, ref leafState.Left, direction);
             }
             leafState.Position += direction.normalized*offset;

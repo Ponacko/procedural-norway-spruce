@@ -4,26 +4,26 @@ using System.Collections.Generic;
 
 public class Lod : MonoBehaviour {
     public List<GameObject> trees = new List<GameObject>();
-    public Camera cam;
+    private Camera cam;
     public List<float> thresh = new List<float>();
     public int state = 0;
 
 	// Use this for initialization
 	void Start () {
+	    cam = FindObjectOfType<Camera>();
         foreach (var t in trees)
         {
-            t.SetActive(false);
+            if (t != null) {
+                t.SetActive(false);
+            }
         }
 
     }
 
     private void SetLodActive() {
         for (int i = 0; i < trees.Count; i++) {
-            if (i == state) {
-                trees[i].SetActive(true);
-            }
-            else {
-                trees[i].SetActive(false);
+            if (trees[i] != null) {
+                trees[i].SetActive(i == state);
             }
         }
     }
