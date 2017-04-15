@@ -97,8 +97,8 @@ public class MyLSystem2 : MonoBehaviour
 
     private void Start()
     {
-        for (int i = 0; i < 2; i++) {
-            for (int j = 0; j < 2; j++) {
+        for (int i = 0; i < 10; i++) {
+            for (int j = 0; j < 10; j++) {
                 var vector3 = new Vector3(r.Next(i * 5, (i + 1) * 5), 0, r.Next(j * 5, (j + 1) * 5));
                 var treeSet = Instantiate(LodPrefab, vector3, Quaternion.identity);
                 treeSets.Add(treeSet);
@@ -142,33 +142,49 @@ public class MyLSystem2 : MonoBehaviour
         return vertices;
     }
 
-    private Mesh CreateLeaf(State state, int lod) {
-        var m = new Mesh();
-        m.name = "Leaf";
+    private void CreateLeaf(State state, int lod, Spruce tree) {
+        //var vertices = MakeVertices(currentState, sides).Concat(MakeVertices(nextState, sides)).ToArray();
+        //if (tree.CurrentVertices + vertices.Length >= Spruce.MaxVertices)
+        //{
+        //    tree.Instantiate();
+        //}
+        //tree.Vertices.AddRange(vertices);
+        //tree.Uvs.AddRange(MakeUVs(sides));
+        //var tris = MakeTris(hasBot, hasTop, sides);
+        //for (int index = 0; index < tris.Count; index++)
+        //{
+        //    tris[index] += tree.CurrentVertices;
+        //}
+        //tree.Tris.AddRange(tris);
+        //tree.CurrentVertices += vertices.Length;
+
+        
         var offset = currentState.Width;
         var length = currentState.Width*30;
-        m.name = "Leaf";
+        Vector3[] vertices;
+        Vector2[] uv;
+        int[] triangles;
         if (lod < 6) {
-            m.vertices = new Vector3[] {
+            vertices = new Vector3[] {
                 state.Position - offset*state.Heading - offset*state.Left,
                 state.Position - offset*state.Heading + offset*state.Left,
                 state.Position + offset*state.Heading,
                 state.Position + state.Up*length*1.3f + state.Heading*65*offset
             };
-            m.uv = new Vector2[] {
+            uv = new Vector2[] {
                 new Vector2(0, 0),
                 new Vector2(0, 1),
                 new Vector2(1, 0),
                 new Vector2(1, 1),
             };
-            m.triangles = new[] {
+            triangles = new[] {
                 3, 1, 0,
                 3, 2, 1,
                 3, 0, 2
             };
         }
         else {
-            m.vertices = new Vector3[] {
+            vertices = new Vector3[] {
                 state.Position - offset*state.Heading - offset*state.Left,
                 state.Position - offset*state.Heading + offset*state.Left,
                 state.Position + offset*state.Heading - offset*state.Left,
@@ -179,7 +195,7 @@ public class MyLSystem2 : MonoBehaviour
                 state.Position + state.Up*length + state.Heading*50*offset + offset*state.Heading + offset*state.Left,
                 state.Position + state.Up*length*1.3f + state.Heading*65*offset
             };
-            m.uv = new Vector2[] {
+            uv = new Vector2[] {
                 new Vector2(0, 0),
                 new Vector2(0, 1),
                 new Vector2(0.25f, 0),
@@ -190,7 +206,7 @@ public class MyLSystem2 : MonoBehaviour
                 new Vector2(0.75f, 1),
                 new Vector2(1, 0.5f)
             };
-            m.triangles = new[] {
+            triangles = new[] {
                 4, 0, 1,
                 4, 1, 5,
                 6, 2, 0,
@@ -205,8 +221,19 @@ public class MyLSystem2 : MonoBehaviour
                 8, 4, 5
             };
         }
+        if (tree.LeafCurrentVertices + vertices.Length >= Spruce.MaxVertices)
+        {
+            tree.InstatiateLeaf();
+        }
+        tree.LeafVertices.AddRange(vertices);
+        tree.LeafUvs.AddRange(uv);
+        for (int index = 0; index < triangles.Length; index++)
+        {
+            triangles[index] += tree.LeafCurrentVertices;
+        }
+        tree.LeafTris.AddRange(triangles);
+        tree.LeafCurrentVertices += vertices.Length;
         
-        return m;
     }
 
     private Vector2[] MakeUVs(int sides) {
@@ -237,17 +264,6 @@ public class MyLSystem2 : MonoBehaviour
         }
         tree.Tris.AddRange(tris);
         tree.CurrentVertices += vertices.Length;
-        //var m = new Mesh();
-        //m.name = "Branch";
-
-        //m.vertices = MakeVertices(currentState, sides).Concat(MakeVertices(nextState, sides)).ToArray();
-
-        //m.uv = MakeUVs(sides).ToArray();
-        
-        //m.triangles = MakeTris(hasBot, hasTop, sides).ToArray();
-        //m.RecalculateNormals();
-
-        //return m;
     }
 
     private static List<int> MakeTris(bool hasBot, bool hasTop, int sides)
@@ -435,9 +451,6 @@ public class MyLSystem2 : MonoBehaviour
             {
                 continue;
             }
-            //var plane = new GameObject("Branch");
-            //plane.transform.SetParent(tree);
-            //var meshFilter = (MeshFilter)plane.AddComponent(typeof(MeshFilter));
             int sides = Sides(i);
             if (currentState.Width < MinBranchWidth(i) * 10)
             {
@@ -447,10 +460,11 @@ public class MyLSystem2 : MonoBehaviour
             CreateMesh(index == 0, index + 1 >= s.Length || s[index + 1] == ']', sides, spruce);
             if (index == s.LastIndexOf('F')) {
                 spruce.Instantiate();
+                spruce.InstatiateLeaf();
             }
             if (currentState.Width < 0.005f)
             {
-                BuildLeaves(tree.gameObject, i);
+                BuildLeaves(tree, i);
             }
         }
         if (currentState.ChangedDir)
@@ -475,7 +489,7 @@ public class MyLSystem2 : MonoBehaviour
     }
 
     private int MaxLeaves(int lod) {
-        return (lod < 3) ? lod-1 : lod-2;
+        return (lod < 3) ? lod : lod-1;
     }
 
     private float MinOffset(int lod) {
@@ -519,7 +533,7 @@ public class MyLSystem2 : MonoBehaviour
         }
     }
 
-    private void BuildLeaves(GameObject tree, int lod) {
+    private void BuildLeaves(Transform tree, int lod) {
         var maxleaves = MaxLeaves(lod);
         var minOffset = MinOffset(lod);
         var maxOffset = MaxOffset(lod);
@@ -537,15 +551,7 @@ public class MyLSystem2 : MonoBehaviour
         while (direction.magnitude > offset && j< maxleaves) {
             j++;
             for (var i = 0; i < 8; i++) {
-                var leaf = new GameObject("Leaf");
-                leaf.transform.SetParent(tree.transform);
-                var meshFilter = (MeshFilter)leaf.AddComponent(typeof(MeshFilter));
-                meshFilter.mesh = CreateLeaf(leafState, lod);
-                meshFilter.sharedMesh.name = "Leaf";
-                var renderer = leaf.AddComponent(typeof(MeshRenderer)) as MeshRenderer;
-                renderer.material.shader = Shader.Find("Diffuse");
-                LeafTexture.Apply();
-                renderer.material.mainTexture = LeafTexture;
+                CreateLeaf(leafState, lod, tree.GetComponent<Spruce>());
                 RotateAxes( 45 * Randomness(0.75f, 1.2f), ref leafState.Up, ref leafState.Left, direction);
             }
             leafState.Position += direction.normalized*offset;
