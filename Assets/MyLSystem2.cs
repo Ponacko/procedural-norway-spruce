@@ -102,7 +102,7 @@ public class MyLSystem2 : MonoBehaviour
             UvsDictionary.Add(i, MakeUVs(i));
         }
 
-        Generate(2);
+        Generate(10);
     }
 
     private void Start() {
