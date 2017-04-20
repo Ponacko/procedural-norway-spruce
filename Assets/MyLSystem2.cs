@@ -3,6 +3,7 @@ using UnityEngine;
 using System.Text;
 using System.Linq;
 using System.Collections.Generic;
+using System.ComponentModel;
 using UnityEngine.UI;
 using Tree = UnityEngine.Tree;
 
@@ -25,6 +26,7 @@ public class MyLSystem2 : MonoBehaviour
     }
     
     public List<GameObject> Sliders = new List<GameObject>();
+    public GameObject countSlider;
 
     public Rule[] RulesArray;
     public Parameter[] ParameterArray;
@@ -56,12 +58,8 @@ public class MyLSystem2 : MonoBehaviour
     private Dictionary<string, string> parameters = new Dictionary<string, string>();
     private Stack<State> states = new Stack<State>();
     private System.Random r = new System.Random();
-
-    private void Awake()
-    {
-        nextState = currentState.Clone();
-        ResetParams();
-    }
+    private string sentence;
+    private float progress;
 
     private void ResetParams()
     {
@@ -95,25 +93,43 @@ public class MyLSystem2 : MonoBehaviour
         }
     }
 
-    private void Start()
+    private void Awake()
     {
-        for (int i = 0; i < 10; i++) {
-            for (int j = 0; j < 10; j++) {
+        nextState = currentState.Clone();
+        ResetParams();
+        for (int i = 4; i < 9; i += 2)
+        {
+            UvsDictionary.Add(i, MakeUVs(i));
+        }
+
+        Generate(2);
+    }
+
+    private void Start() {
+        
+
+    }
+
+    private void Generate (int numberOfTrees) {
+        treeSets.Clear();
+        for (int i = 0; i < numberOfTrees; i++)
+        {
+            for (int j = 0; j < numberOfTrees; j++)
+            {
                 var vector3 = new Vector3(r.Next(i * 5, (i + 1) * 5), 0, r.Next(j * 5, (j + 1) * 5));
                 var treeSet = Instantiate(LodPrefab, vector3, Quaternion.identity);
                 treeSets.Add(treeSet);
             }
         }
-        var sentence = Axiom;
+        sentence = Axiom;
         for (var i = 0; i < Iterations; i++)
         {
             sentence = Replace(sentence);
-            Debug.Log(sentence);
+            //Debug.Log(sentence);
         }
-        for (int i = 4; i < 9; i+=2) {
-            UvsDictionary.Add(i, MakeUVs(i));
-        }
-        foreach (var treeSet in treeSets) {
+        
+        foreach (var treeSet in treeSets)
+        {
             currentState = new State()
             {
                 Heading = Vector3.up,
@@ -126,11 +142,6 @@ public class MyLSystem2 : MonoBehaviour
             nextState = currentState.Clone();
             Draw(sentence, treeSet);
         }
-        var trees = FindObjectsOfType<Tree>();
-        //foreach (Tree tree in trees) {
-        //    tree.Optimize();
-        //}
-
     }
 
     private List<Vector3> MakeVertices(State state, int sides) {
@@ -381,34 +392,27 @@ public class MyLSystem2 : MonoBehaviour
                     nextState.Width = GetParameter(s, index) / 50;
                     break;
             }
+            //yield return "";
+
         }
     }
 
     public void Redraw() {
-        //foreach (var tree in Trees) {
-        //    foreach (Transform child in tree.transform)
-        //    {
-        //        Destroy(child.gameObject);
-        //    }
-        //}
-        
+      
         ResetParams();
         foreach (var slider in Sliders) {
             parameters[slider.name] = slider.GetComponent<Slider>().value.ToString();
+        }
+         int numberOfTrees = (int)countSlider.GetComponent<Slider>().value;
+        var trees = FindObjectsOfType<Lod>();
+        foreach (var tree in trees) {
+            Destroy(tree.gameObject);
         }
         currentState = new State() { Heading = Vector3.up, Up = Vector3.back, Left = Vector3.left, Width = 0,
             Position = Vector3.zero, ChangedDir = false };
         nextState = currentState.Clone();
         states.Clear();
-        var sentence = Axiom;
-        for (var i = 0; i < Iterations; i++)
-        {
-            sentence = Replace(sentence);
-            Debug.Log(sentence);
-        }
-        foreach (var treeSet in treeSets) {
-            Draw(sentence, treeSet);
-        }
+        Generate(numberOfTrees);
     }
 
     private float MinBranchWidth(int lod) {
