@@ -87,6 +87,9 @@
     <Compile Include="Assets\MyLSystem3.cs" />
     <Compile Include="Assets\Spruce.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Assets\sky5X\README.txt" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="GenerateTargetFrameworkMonikerAttribute" />
 </Project>

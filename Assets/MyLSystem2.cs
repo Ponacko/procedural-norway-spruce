@@ -125,7 +125,6 @@ public class MyLSystem2 : MonoBehaviour
         for (var i = 0; i < Iterations; i++)
         {
             sentence = Replace(sentence);
-            //Debug.Log(sentence);
         }
         
         foreach (var treeSet in treeSets)
@@ -154,22 +153,6 @@ public class MyLSystem2 : MonoBehaviour
     }
 
     private void CreateLeaf(State state, int lod, Spruce tree) {
-        //var vertices = MakeVertices(currentState, sides).Concat(MakeVertices(nextState, sides)).ToArray();
-        //if (tree.CurrentVertices + vertices.Length >= Spruce.MaxVertices)
-        //{
-        //    tree.Instantiate();
-        //}
-        //tree.Vertices.AddRange(vertices);
-        //tree.Uvs.AddRange(MakeUVs(sides));
-        //var tris = MakeTris(hasBot, hasTop, sides);
-        //for (int index = 0; index < tris.Count; index++)
-        //{
-        //    tris[index] += tree.CurrentVertices;
-        //}
-        //tree.Tris.AddRange(tris);
-        //tree.CurrentVertices += vertices.Length;
-
-        
         var offset = currentState.Width;
         var length = currentState.Width*30;
         Vector3[] vertices;
@@ -392,8 +375,6 @@ public class MyLSystem2 : MonoBehaviour
                     nextState.Width = GetParameter(s, index) / 50;
                     break;
             }
-            //yield return "";
-
         }
     }
 
