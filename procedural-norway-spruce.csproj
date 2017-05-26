@@ -77,14 +77,10 @@
   <ItemGroup>
     <Compile Include="Assets\Elenesski Generic Move Camera\GenericMoveCamera.cs" />
     <Compile Include="Assets\Elenesski Generic Move Camera\GenericMoveCameraInputs.cs" />
-    <Compile Include="Assets\LSystemGenerator.cs" />
-    <Compile Include="Assets\LSystems.cs" />
     <Compile Include="Assets\LevelManager.cs" />
     <Compile Include="Assets\Loading.cs" />
     <Compile Include="Assets\Lod.cs" />
-    <Compile Include="Assets\MyLSystem.cs" />
     <Compile Include="Assets\MyLSystem2.cs" />
-    <Compile Include="Assets\MyLSystem3.cs" />
     <Compile Include="Assets\Spruce.cs" />
   </ItemGroup>
   <ItemGroup>

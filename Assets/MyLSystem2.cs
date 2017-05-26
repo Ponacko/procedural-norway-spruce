@@ -1,11 +1,9 @@
-﻿using System;
+using System;
 using UnityEngine;
 using System.Text;
 using System.Linq;
 using System.Collections.Generic;
-using System.ComponentModel;
 using UnityEngine.UI;
-using Tree = UnityEngine.Tree;
 
 public class MyLSystem2 : MonoBehaviour
 {
@@ -103,11 +101,6 @@ public class MyLSystem2 : MonoBehaviour
         }
 
         Generate(10);
-    }
-
-    private void Start() {
-        
-
     }
 
     private void Generate (int numberOfTrees) {
