@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 public class Spruce : MonoBehaviour {
@@ -57,31 +56,4 @@ public class Spruce : MonoBehaviour {
         LeafTris = new List<int>();
         LeafCurrentVertices = 0;
     }
-
-
-
-    //public void Optimize() {
-    //    int maxMeshes = 6000;
-    //    MeshFilter[] meshFilters = GetComponentsInChildren<MeshFilter>();
-    //    CombineInstance[] combine = new CombineInstance[maxMeshes];
-    //    List<GameObject> toDestroy = new List<GameObject>();
-    //    int i = 0;
-    //    while (i < meshFilters.Length && i < maxMeshes)
-    //    {
-    //        combine[i].mesh = meshFilters[i].sharedMesh;
-    //        combine[i].transform = meshFilters[i].transform.localToWorldMatrix;
-    //        toDestroy.Add(meshFilters[i].gameObject);
-    //        i++;
-
-    //    }
-    //    transform.GetComponent<MeshFilter>().mesh = new Mesh();
-    //    transform.GetComponent<MeshFilter>().mesh.CombineMeshes(combine, true);
-    //    transform.gameObject.SetActive(true);
-    //}
-    
-
-    // Update is called once per frame
-    void Update () {
-		
-	}
 }

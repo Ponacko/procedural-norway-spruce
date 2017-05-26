@@ -1,10 +1,9 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class Loading : MonoBehaviour {
 
-    private AsyncOperation async = null; // When assigned, load is in progress.
+    private AsyncOperation async;
     private IEnumerator LoadALevel(int level)
     {
         async = Application.LoadLevelAsync(level);

@@ -5,18 +5,18 @@ using System.Linq;
 using System.Collections.Generic;
 using UnityEngine.UI;
 
-public class MyLSystem2 : MonoBehaviour
+public class Generator : MonoBehaviour
 {
     public string Axiom = "F";
 
-    [System.Serializable]
+    [Serializable]
     public struct Rule
     {
         public string Pred;
         public string Succ;
     }
 
-    [System.Serializable]
+    [Serializable]
     public struct Parameter
     {
         public string Name;
@@ -57,20 +57,9 @@ public class MyLSystem2 : MonoBehaviour
     private Stack<State> states = new Stack<State>();
     private System.Random r = new System.Random();
     private string sentence;
-    private float progress;
 
     private void ResetParams()
     {
-        //StringBuilder sb = new StringBuilder();
-        //foreach (var rule in rulesArray)
-        //{
-        //    sb.Append(string.Format("{0} -> {1}\r\n", rule.pred, rule.succ));
-        //}
-        //foreach (var param in parameterArray)
-        //{
-        //    sb.Append(string.Format("{0}: {1}\r\n", param.name, param.value));
-        //}
-        //Debug.Log(sb.ToString());
         foreach (var c in RulesArray)
         {
             if (!rules.ContainsKey(c.Pred)) {

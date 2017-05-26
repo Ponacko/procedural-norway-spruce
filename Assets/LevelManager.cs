@@ -1,11 +1,10 @@
 ﻿using UnityEngine;
-using System.Collections;
 using UnityEngine.SceneManagement;
 
 public class LevelManager : MonoBehaviour {
 
     public void Redraw() {
-        var generators = FindObjectsOfType<MyLSystem2>();
+        var generators = FindObjectsOfType<Generator>();
         foreach (var g in generators) {
             g.Redraw();
         }
