@@ -8,7 +8,7 @@ public class Spruce : MonoBehaviour {
     public List<Vector3> Vertices = new List<Vector3>();
     public List<Vector2> Uvs = new List<Vector2>();
     public List<int> Tris = new List<int>();
-    public int LeafCurrentVertices = 0;
+    public int LeafCurrentVertices;
     public List<Vector3> LeafVertices = new List<Vector3>();
     public List<Vector2> LeafUvs = new List<Vector2>();
     public List<int> LeafTris = new List<int>();
@@ -16,6 +16,10 @@ public class Spruce : MonoBehaviour {
     public Texture2D Tex;
     public Texture2D LeafTex;
 
+    /// <summary>
+    /// Creates a new mesh using the vertices, uvs and triangles in the attributes of this class. 
+    /// Instantiates a new game object and assigns this mesh and texture to it. Clears lists of vertices, uvs and triangles.
+    /// </summary>
     public void Instantiate() {
         var part = Instantiate(MeshPartPrefab, Vector3.zero, transform.rotation, transform);
         part.name = "Branches";
@@ -36,6 +40,10 @@ public class Spruce : MonoBehaviour {
         CurrentVertices = 0;
     }
 
+    /// <summary>
+    /// Creates a new mesh using the vertices, uvs and triangles for the leaves in the attributes of this class. 
+    /// Instantiates a new game object and assigns this mesh and texture to it. Clears lists of vertices, uvs and triangles for the leaves.
+    /// </summary>
     public void InstatiateLeaf() {
         var leaf = Instantiate(MeshPartPrefab, Vector3.zero, transform.rotation, transform);
         leaf.name = "Branches";

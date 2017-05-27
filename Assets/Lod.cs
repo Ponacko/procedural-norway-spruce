@@ -5,9 +5,8 @@ public class Lod : MonoBehaviour {
     public List<GameObject> trees = new List<GameObject>();
     private Camera cam;
     public List<float> thresh = new List<float>();
-    public int state = 0;
-
-	// Use this for initialization
+    public int state;
+    
 	void Start () {
 	    cam = FindObjectOfType<Camera>();
         foreach (var t in trees)
